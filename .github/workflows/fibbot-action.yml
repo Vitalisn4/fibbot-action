@@ -1,4 +1,4 @@
-name: FibBot Action - Hello World
+name: FibBot Action Workflow
 
 on:
   pull_request:
@@ -9,22 +9,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Build FibBot action inside Docker
-        uses: docker://rust:latest
-        with:
-          args: cargo build --release
+    - name: Build FibBot action inside Docker
+      uses: docker://rust:latest
+      with:
+        args: cargo build --release
 
-      - name: Run FibBot action inside Docker with parameters
-        uses: docker://rust:latest
-        with:
-          args: |
-            cargo run --release
-        env:
-          INPUT_ENABLE_FIB: 'true'
-          INPUT_MAX_THRESHOLD: '1000'
+    - name: Run FibBot action inside Docker with parameters
+      uses: docker://rust:latest
+      with:
+        args: |
+          cargo run --release
+      env:
+        INPUT_ENABLE_FIB: 'true'
+        INPUT_MAX_THRESHOLD: '1000'
 
-      - name: Output "Hello, World!" from FibBot Action
-        run: echo "Hello, World!"
+    - name: Output "Hello, World!" from FibBot Action
+      run: echo "Hello, World!"

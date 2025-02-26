@@ -1,6 +1,6 @@
 use std::env;
 use std::process;
-use fibonacci::{fibonacci, extract_numbers};
+use regex::Regex;
 
 fn parse_inputs() -> (bool, u64) {
     let enable_fib = env::var("INPUT_ENABLE_FIB")
@@ -16,9 +16,35 @@ fn parse_inputs() -> (bool, u64) {
     (enable_fib, max_threshold)
 }
 
-// Main logic for processing PR content and Fibonacci calculation
+fn fibonacci(n: u64) -> u64 {
+    if n == 0 {
+        return 0;
+    } else if n == 1 {
+        return 1;
+    }
+
+    let mut a = 0;
+    let mut b = 1;
+
+    for _ in 2..=n {
+        let temp = a + b;
+        a = b;
+        b = temp;
+    }
+
+    b
+}
+
+// Function to extract numbers from a string
+fn extract_numbers(text: &str) -> Vec<u64> {
+    let re = Regex::new(r"\b\d+\b").unwrap();  // Regular expression to match numbers
+    re.find_iter(text)
+        .filter_map(|mat| mat.as_str().parse::<u64>().ok())
+        .collect()
+}
+
 fn main() {
-    // Print "Hello, World!" for Day 2
+  // Print "Hello, World!" for Day 2
     println!("Hello, World!");
 
     // Simulated PR content (this will be replaced by actual PR content in real cases)
@@ -39,5 +65,36 @@ fn main() {
         }
     } else {
         println!("Fibonacci calculation is disabled.");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_fibonacci() {
+        assert_eq!(fibonacci(0), 0);
+        assert_eq!(fibonacci(1), 1);
+        assert_eq!(fibonacci(2), 1);
+        assert_eq!(fibonacci(3), 2);
+        assert_eq!(fibonacci(4), 3);
+        assert_eq!(fibonacci(5), 5);
+        assert_eq!(fibonacci(10), 55);
+        assert_eq!(fibonacci(20), 6765);
+    }
+
+    #[test]
+    fn test_extract_numbers() {
+        let pr_content = "The numbers are 3, 5, and 8.";
+        let numbers = extract_numbers(pr_content);
+        assert_eq!(numbers, vec![3, 5, 8]);
+    }
+
+    #[test]
+    fn test_extract_numbers_with_non_numbers() {
+        let pr_content = "This is a test with no numbers";
+        let numbers = extract_numbers(pr_content);
+        assert_eq!(numbers, vec![]);  // Should return an empty vector
     }
 }
