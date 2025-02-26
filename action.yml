@@ -1,0 +1,18 @@
+name: FibBot GitHub Action
+description: A GitHub Action to calculate Fibonacci numbers from PR content
+inputs:
+  enable_fib:
+    description: 'Enable Fibonacci calculation (true/false)'
+    required: true
+    default: 'true'
+  max_threshold:
+    description: 'Maximum threshold for Fibonacci calculation'
+    required: true
+    default: '1000'
+runs:
+  using: 'docker'
+  image: 'docker://rust:latest'
+  args:
+    - 'cargo'
+    - 'run'
+    - '--release'
