@@ -6,16 +6,25 @@ on:
 
 jobs:
   fibbot-action:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Rust
-      uses: actions/setup-rust@v2
+      - name: Set up Rust Environment
+        uses: actions/setup-rust@v1
+        with:
+          rust-version: 1.64.0
 
-    - name: Build and run FibBot action
-      run: |
-        cargo build --release
-        ./target/release/fibbot-action
+      - name: Build FibBot Rust Project
+        run: |
+          cargo build --release
+
+      - name: Run FibBot Action
+        run: |
+          ./target/release/fibbot-action
+
+      - name: Output "Hello, World!" from FibBot Action
+        run: echo "Hello, World!"  # This will show up in logs to verify
+
