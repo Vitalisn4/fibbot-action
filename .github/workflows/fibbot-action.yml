@@ -12,10 +12,20 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+    - name: Build FibBot action inside Docker
+      uses: docker://rust:latest
+      with:
+        args: cargo build --release
 
-    - name: Build and run FibBot action
+    - name: Run FibBot action inside Docker
       uses: docker://rust:latest
       with:
         args: cargo run --release
+      env:
+        INPUT_ENABLE_FIB: 'true'
+        INPUT_MAX_THRESHOLD: '1000'
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+
+    - name: Output "Hello, World!" from FibBot Action
+      run: echo "FibBot Action has successfully run!"
