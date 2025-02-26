@@ -1,6 +1,6 @@
 name: 'FibBot GitHub Action'
 
-description: 'A GitHub Action to calculate Fibonacci numbers for PR content.'
+description: 'A GitHub Action to calculate Fibonacci numbers for PR content and post the results as a comment.'
 
 inputs:
   enable_fib:
@@ -18,3 +18,6 @@ runs:
   args: |
     cargo build --release
     ./target/release/fibbot-action
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    PR_URL: ${{ github.event.pull_request.url }}

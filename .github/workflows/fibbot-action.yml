@@ -12,12 +12,17 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Set up Rust
+      uses: actions/setup-rust@v1
+      with:
+        rust-version: 1.58.0
+
     - name: Build FibBot action inside Docker
       uses: docker://rust:latest
       with:
         args: cargo build --release
 
-    - name: Run FibBot action inside Docker with parameters
+    - name: Run FibBot action with parameters
       uses: docker://rust:latest
       with:
         args: |
@@ -25,6 +30,8 @@ jobs:
       env:
         INPUT_ENABLE_FIB: 'true'
         INPUT_MAX_THRESHOLD: '1000'
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR_URL: ${{ github.event.pull_request.url }}
 
-    - name: Output "Hello, World!" from FibBot Action
-      run: echo "Hello, World!"
+    - name: Output results
+      run: echo "FibBot Action completed"
