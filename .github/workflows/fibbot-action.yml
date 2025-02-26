@@ -12,23 +12,20 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Build and run FibBot action inside Docker
+    - name: Build FibBot action inside Docker
       uses: docker://rust:latest
       with:
-        args: |
-          cargo build --release
-          cargo run --release
+        args: cargo build --release
+
+    - name: Run FibBot action inside Docker
+      uses: docker://rust:latest
+      with:
+        args: cargo run --release
       env:
         INPUT_ENABLE_FIB: 'true'
         INPUT_MAX_THRESHOLD: '1000'
-    
-    - name: Post results as a comment on PR
-      run: |
-        echo "Results are posted!"
-        # Here, you'd make an API call to GitHub to post the Fibonacci results
-        # You might use curl and pass GITHUB_TOKEN to authenticate
-        curl -X POST \
-          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          -d '{"body": "Fibonacci results here"}' \
-          "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+
+    - name: Output "Hello, World!" from FibBot Action
+      run: echo "FibBot Action has successfully run!"

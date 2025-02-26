@@ -1,13 +1,9 @@
 use std::env;
+use std::process;
 use regex::Regex;
-use reqwest::blocking::{Client, Response};
-use reqwest::header::{AUTHORIZATION, USER_AGENT};
-use serde::{Serialize, Deserialize};
-
-#[derive(Serialize, Deserialize)]
-struct Comment {
-    body: String,
-}
+use reqwest::blocking::{Client};
+use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
+use serde::Serialize;
 
 fn parse_inputs() -> (bool, u64) {
     let enable_fib = env::var("INPUT_ENABLE_FIB")
@@ -42,6 +38,7 @@ fn fibonacci(n: u64) -> u64 {
     b
 }
 
+// Function to extract numbers from a string
 fn extract_numbers(text: &str) -> Vec<u64> {
     let re = Regex::new(r"\b\d+\b").unwrap();  // Regular expression to match numbers
     re.find_iter(text)
@@ -49,48 +46,79 @@ fn extract_numbers(text: &str) -> Vec<u64> {
         .collect()
 }
 
-fn post_comment(pr_url: &str, body: &str, token: &str) -> Result<Response, reqwest::Error> {
-    let client = Client::new();
-    let comment = Comment { body: body.to_string() };
+// Struct to represent the request body for the GitHub API
+#[derive(Serialize)]
+struct CommentRequest {
+    body: String,
+}
 
+fn post_github_comment(pr_number: u64, body: &str) -> Result<(), reqwest::Error> {
+    let token = env::var("GITHUB_TOKEN").expect("GITHUB_TOKEN not set");
+    let repo = env::var("GITHUB_REPOSITORY").expect("GITHUB_REPOSITORY not set");
+
+    // GitHub API URL for posting comments
+    let url = format!(
+        "https://api.github.com/repos/{}/issues/{}/comments",
+        repo, pr_number
+    );
+
+    let client = Client::new();
+
+    // Prepare headers
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, HeaderValue::from_str(&format!("token {}", token))?);
+    headers.insert("Accept", HeaderValue::from_static("application/vnd.github.v3+json"));
+
+    // Prepare comment data
+    let comment_data = CommentRequest { body: body.to_string() };
+
+    // Send request to post comment
     client
-        .post(format!("{}/comments", pr_url))
-        .header(AUTHORIZATION, format!("token {}", token))
-        .header(USER_AGENT, "FibBot Action")
-        .json(&comment)
-        .send()
+        .post(&url)
+        .headers(headers)
+        .json(&comment_data)
+        .send()?;
+
+    Ok(())
 }
 
 fn main() {
-    // Simulated PR content
+    // Simulated PR content (this will be replaced by actual PR content in real cases)
     let pr_content = "Here are the numbers: 3, 5, and 8. Calculate Fibonacci for them.";
-    let numbers = extract_numbers(pr_content);
+    println!("Simulated PR content: {}", pr_content);
 
-    // Extract inputs
+    // Extract numbers from PR content
+    let numbers = extract_numbers(pr_content);
+    println!("Extracted numbers: {:?}", numbers);
+
     let (enable_fib, max_threshold) = parse_inputs();
 
+    let mut comment_body = String::from("Fibonacci results:\n");
+
     if enable_fib {
-        let mut result = String::from("Fibonacci calculation results:\n");
+        println!("Fibonacci calculation is enabled.");
         for &num in &numbers {
             if num <= max_threshold {
-                let fib_result = fibonacci(num);
-                result.push_str(&format!("Fibonacci of {}: {}\n", num, fib_result));
+                let result = fibonacci(num);
+                println!("Fibonacci of {}: {}", num, result);
+                comment_body.push_str(&format!("Fibonacci of {}: {}\n", num, result));
             } else {
-                result.push_str(&format!("Skipping number {} as it exceeds the max threshold of {}\n", num, max_threshold));
+                println!("Number {} exceeds the max threshold", num);
+                comment_body.push_str(&format!("Number {} exceeds the max threshold\n", num));
             }
-        }
-
-        // GitHub token and PR URL from environment variables
-        let github_token = env::var("GITHUB_TOKEN").expect("GITHUB_TOKEN is not set");
-        let pr_url = env::var("PR_URL").expect("PR_URL is not set");
-
-        // Post the result as a comment on the pull request
-        match post_comment(&pr_url, &result, &github_token) {
-            Ok(response) => println!("Posted comment: {:?}", response),
-            Err(e) => eprintln!("Error posting comment: {}", e),
         }
     } else {
         println!("Fibonacci calculation is disabled.");
+        comment_body.push_str("Fibonacci calculation is disabled.\n");
+    }
+
+    // Get the pull request number from the environment (you can retrieve this dynamically in a real PR)
+    let pr_number = env::var("GITHUB_REF_NAME").unwrap_or_else(|_| String::from("0")).parse::<u64>().unwrap_or(0);
+
+    // Post the result to GitHub
+    if let Err(e) = post_github_comment(pr_number, &comment_body) {
+        eprintln!("Failed to post comment: {}", e);
+        process::exit(1);
     }
 }
 
